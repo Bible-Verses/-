@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>آيات الكتاب المقدس</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Amiri', serif;
+            background: #0a1a3a; /* كحلي غامق */
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+        }
+
+        .quote-container {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            color: #fff;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .quote-box {
+            background-color: transparent;
+            border-radius: 10px;
+            padding: 40px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            min-height: 180px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #quote {
+            font-size: 2rem;
+            line-height: 1.8;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .no-quotes {
+            font-size: 1.2rem;
+            color: #ccc;
+            text-align: center;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            #quote {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+    <!-- إضافة مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="quote-container">
+            <h1>آية اليوم</h1>
+            <div class="quote-box">
+                <p id="quote">جار تحميل الآية...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // تكوين Firebase
+        const firebaseConfig = { 
+            apiKey: "AIzaSyCGIsZlMkrHbx8z6sEBc17CPK9XAJDKFyY", 
+            authDomain: "ayaat-23b58.firebaseapp.com", 
+            databaseURL: "https://ayaat-23b58-default-rtdb.firebaseio.com", 
+            projectId: "ayaat-23b58", 
+            storageBucket: "ayaat-23b58.firebasestorage.app", 
+            messagingSenderId: "890766245823", 
+            appId: "1:890766245823:web:cb2f156278a1a1141dab0a" 
+        };
+
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const quotesCollection = db.collection('quotes');
+        
+        // تخزين معرف فريد للمستخدم في التخزين المحلي
+        function generateUserId() {
+            if (!localStorage.getItem('userId')) {
+                const userId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                localStorage.setItem('userId', userId);
+            }
+            return localStorage.getItem('userId');
+        }
+        
+        // تحميل الآيات من Firestore
+        async function loadUserQuotes() {
+            try {
+                const snapshot = await quotesCollection.get();
+                const quotes = [];
+                snapshot.forEach(doc => {
+                    quotes.push(doc.data().text);
+                });
+                return quotes;
+            } catch (error) {
+                console.error("خطأ في تحميل الآيات:", error);
+                return [];
+            }
+        }
+
+        // عرض آية عشوائية
+        async function displayRandomQuote() {
+            const quoteElement = document.getElementById('quote');
+            quoteElement.innerHTML = '<div class="loading"></div>'; // إظهار مؤشر التحميل
+            
+            try {
+                const quotes = await loadUserQuotes();
+                
+                if (quotes.length === 0) {
+                    quoteElement.textContent = "لا توجد آيات محفوظة بعد. يرجى إضافة آيات جديدة من صفحة الإدارة.";
+                    return;
+                }
+                
+                // استخدام معرف المستخدم والتاريخ الحالي لاختيار آية
+                const userId = generateUserId();
+                const today = new Date().toDateString();
+                
+                // إنشاء رقم عشوائي ثابت لهذا المستخدم ولهذا اليوم
+                const seed = hashCode(userId + today);
+                const randomIndex = Math.abs(seed) % quotes.length;
+                
+                quoteElement.textContent = quotes[randomIndex];
+            } catch (error) {
+                console.error("خطأ في عرض الآية:", error);
+                quoteElement.textContent = "حدث خطأ أثناء تحميل الآية. يرجى المحاولة مرة أخرى.";
+            }
+        }
+
+        // دالة لإنشاء قيمة تجزئة من سلسلة نصية
+        function hashCode(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // تحويل إلى 32bit integer
+            }
+            return hash;
+        }
+
+        // تحميل آية عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', () => {
+            displayRandomQuote();
+        });
+    </script>
+</body>
+</html>

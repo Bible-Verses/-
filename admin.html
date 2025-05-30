@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الآيات</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Amiri', serif;
+            background: #0a1a3a; /* كحلي غامق */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .admin-panel {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1, h2 {
+            color: #fff;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .chat-container {
+            background-color: rgba(245, 245, 245, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .messages {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            max-width: 80%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .system-message {
+            background-color: rgba(227, 242, 253, 0.2);
+            color: #fff;
+            align-self: flex-start;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .user-message {
+            background-color: rgba(232, 245, 233, 0.2);
+            color: #fff;
+            align-self: flex-end;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .input-container {
+            display: flex;
+            margin-bottom: 30px;
+        }
+
+        #quote-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 10px 0 0 10px;
+            font-family: 'Amiri', serif;
+            font-size: 1rem;
+            resize: none;
+            height: 100px;
+        }
+
+        #quote-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        #add-quote {
+            background-color: rgba(30, 60, 114, 0.8);
+            color: white;
+            border: none;
+            padding: 0 25px;
+            border-radius: 0 10px 10px 0;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Amiri', serif;
+            font-weight: 700;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        #add-quote:hover {
+            background-color: rgba(42, 82, 152, 0.9);
+        }
+
+        .quotes-list {
+            background-color: rgba(249, 249, 249, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #quotes-list {
+            list-style-type: none;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        #quotes-list li {
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .delete-quote {
+            background-color: rgba(244, 67, 54, 0.8);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .save-all {
+            background-color: rgba(76, 175, 80, 0.8);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Amiri', serif;
+            font-weight: 700;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .save-all:hover {
+            background-color: rgba(56, 142, 60, 0.9);
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .admin-panel {
+                padding: 20px;
+            }
+            
+            #quote-input {
+                padding: 10px;
+            }
+        }
+    </style>
+    <!-- إضافة مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="admin-panel">
+            <h1>إضافة آيات جديدة</h1>
+            <div class="chat-container">
+                <div id="messages" class="messages"></div>
+            </div>
+            <div class="input-container">
+                <textarea id="quote-input" placeholder="أدخل الآية هنا..."></textarea>
+                <button id="add-quote">إضافة</button>
+            </div>
+            <div class="quotes-list">
+                <h2>الآيات المضافة</h2>
+                <ul id="quotes-list"></ul>
+                <button id="save-all" class="save-all">حفظ جميع الآيات</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // تكوين Firebase
+        const firebaseConfig = { 
+            apiKey: "AIzaSyCGIsZlMkrHbx8z6sEBc17CPK9XAJDKFyY", 
+            authDomain: "ayaat-23b58.firebaseapp.com", 
+            databaseURL: "https://ayaat-23b58-default-rtdb.firebaseio.com", 
+            projectId: "ayaat-23b58", 
+            storageBucket: "ayaat-23b58.firebasestorage.app", 
+            messagingSenderId: "890766245823", 
+            appId: "1:890766245823:web:cb2f156278a1a1141dab0a" 
+        };
+
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const quotesCollection = db.collection('quotes');
+        
+        // قائمة لتخزين الآيات المضافة مؤقتًا
+        let newQuotes = [];
+        
+        // تحميل الآيات المحفوظة سابقًا من Firestore
+        async function loadSavedQuotes() {
+            try {
+                const snapshot = await quotesCollection.get();
+                const quotes = [];
+                snapshot.forEach(doc => {
+                    quotes.push(doc.data().text);
+                });
+                return quotes;
+            } catch (error) {
+                console.error("خطأ في تحميل الآيات:", error);
+                addMessage('حدث خطأ أثناء تحميل الآيات من قاعدة البيانات.');
+                return [];
+            }
+        }
+        
+        // إضافة رسالة إلى منطقة الدردشة
+        function addMessage(text, type = 'system') {
+            const messagesContainer = document.getElementById('messages');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.classList.add(type + '-message');
+            messageElement.textContent = text;
+            messagesContainer.appendChild(messageElement);
+            
+            // تمرير إلى آخر رسالة
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // إضافة آية جديدة إلى القائمة
+        function addQuoteToList(quote) {
+            const quotesList = document.getElementById('quotes-list');
+            const listItem = document.createElement('li');
+            
+            const quoteText = document.createElement('span');
+            quoteText.textContent = quote;
+            
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'حذف';
+            deleteButton.classList.add('delete-quote');
+            deleteButton.addEventListener('click', () => {
+                listItem.remove();
+                newQuotes = newQuotes.filter(q => q !== quote);
+                addMessage(`تم حذف الآية: "${quote}"`);
+            });
+            
+            listItem.appendChild(quoteText);
+            listItem.appendChild(deleteButton);
+            quotesList.appendChild(listItem);
+        }
+
+        // حفظ جميع الآيات في Firestore
+        async function saveAllQuotes() {
+            if (newQuotes.length === 0) {
+                addMessage('لا توجد آيات جديدة للحفظ.');
+                return false;
+            }
+            
+            // تغيير نص الزر ليظهر أنه جاري الحفظ
+            const saveButton = document.getElementById('save-all');
+            const originalText = saveButton.textContent;
+            saveButton.innerHTML = '<span class="loading"></span> جاري الحفظ...';
+            saveButton.disabled = true;
+            
+            try {
+                // إضافة كل آية جديدة إلى Firestore
+                const batch = db.batch();
+                
+                for (const quote of newQuotes) {
+                    const newQuoteRef = quotesCollection.doc();
+                    batch.set(newQuoteRef, { 
+                        text: quote,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                
+                await batch.commit();
+                
+                addMessage(`تم حفظ ${newQuotes.length} آية جديدة بنجاح في قاعدة البيانات!`);
+                newQuotes = [];
+                document.getElementById('quotes-list').innerHTML = '';
+                
+                // إعادة نص الزر إلى الحالة الأصلية
+                saveButton.innerHTML = originalText;
+                saveButton.disabled = false;
+                
+                return true;
+            } catch (error) {
+                addMessage('حدث خطأ أثناء حفظ الآيات في قاعدة البيانات.');
+                console.error('خطأ في حفظ الآيات:', error);
+                
+                // إعادة نص الزر إلى الحالة الأصلية
+                saveButton.innerHTML = originalText;
+                saveButton.disabled = false;
+                
+                return false;
+            }
+        }
+
+        // إعداد الأحداث عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', async () => {
+            addMessage('مرحبًا بك في لوحة إدارة الآيات! يمكنك إضافة آيات جديدة هنا.');
+            addMessage('جاري تحميل الآيات المحفوظة...');
+            
+            // عرض عدد الآيات المحفوظة حاليًا
+            const savedQuotes = await loadSavedQuotes();
+            if (savedQuotes.length > 0) {
+                addMessage(`يوجد حاليًا ${savedQuotes.length} آية محفوظة في قاعدة البيانات.`);
+            } else {
+                addMessage('لا توجد آيات محفوظة حاليًا في قاعدة البيانات. أضف بعض الآيات الجديدة!');
+            }
+            
+            // حدث إضافة آية جديدة
+            document.getElementById('add-quote').addEventListener('click', () => {
+                const quoteInput = document.getElementById('quote-input');
+                const quote = quoteInput.value.trim();
+                
+                if (quote) {
+                    newQuotes.push(quote);
+                    addQuoteToList(quote);
+                    addMessage(`تم إضافة الآية: "${quote}"`);
+                    quoteInput.value = '';
+                } else {
+                    addMessage('الرجاء إدخال آية قبل الإضافة.');
+                }
+            });
+            
+            // حدث حفظ جميع الآيات
+            document.getElementById('save-all').addEventListener('click', saveAllQuotes);
+            
+            // إضافة حدث للإدخال بالضغط على Enter
+            document.getElementById('quote-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    document.getElementById('add-quote').click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
