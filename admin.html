@@ -160,6 +160,81 @@
             margin-top: 120px;
         }
 
+        .daily-verse-section {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .daily-verse-section h2 {
+            color: #4CAF50;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .daily-verse-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 10px;
+            font-family: 'Amiri', serif;
+            font-size: 1rem;
+            resize: none;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+
+        .set-daily-verse {
+            background-color: rgba(76, 175, 80, 0.8);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Amiri', serif;
+            font-weight: 700;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .set-daily-verse:hover {
+            background-color: rgba(56, 142, 60, 0.9);
+        }
+
+        .user-stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            min-width: 100px;
+            justify-content: center;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+        }
+
+        .stat-value {
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
         .chat-container {
             background-color: rgba(245, 245, 245, 0.1);
             border-radius: 10px;
@@ -352,9 +427,25 @@
         <div class="user-header">
             <h3 id="user-name-display"></h3>
             <p id="church-name-display"></p>
+            <div class="user-stats">
+                <div class="stat">
+                    <span class="stat-label">النقاط:</span>
+                    <span class="stat-value" id="user-points">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">الآيات:</span>
+                    <span class="stat-value" id="user-verses">0</span>
+                </div>
+            </div>
         </div>
 
         <div class="admin-panel">
+            <div class="daily-verse-section">
+                <h2>آية اليوم</h2>
+                <textarea id="daily-verse-input" class="daily-verse-input" placeholder="أدخل آية اليوم هنا..."></textarea>
+                <button id="set-daily-verse" class="set-daily-verse">تعيين كآية اليوم</button>
+            </div>
+
             <div class="chat-container">
                 <div id="messages" class="messages"></div>
             </div>
@@ -387,6 +478,7 @@
         const db = firebase.database();
         const usersRef = db.ref('users');
         const quotesRef = db.ref('quotes');
+        const dailyVerseRef = db.ref('dailyVerse');
         
         let newQuotes = [];
         let userName = '';
@@ -517,6 +609,45 @@
             document.getElementById('church-name-display').textContent = churchName;
         }
 
+        // تعيين آية اليوم
+        async function setDailyVerse() {
+            if (!userId) {
+                addMessage('الرجاء إدخال اسمك واسم الكنيسة أولاً');
+                return;
+            }
+            
+            const verseText = document.getElementById('daily-verse-input').value.trim();
+            if (!verseText) {
+                addMessage('الرجاء إدخال آية اليوم');
+                return;
+            }
+            
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                await dailyVerseRef.child(today).set({
+                    text: verseText,
+                    authorName: userName,
+                    authorChurch: churchName,
+                    authorId: userId,
+                    timestamp: new Date().toISOString(),
+                    likes: 0,
+                    views: 0
+                });
+                
+                addMessage('تم تعيين آية اليوم بنجاح!');
+                document.getElementById('daily-verse-input').value = '';
+            } catch (error) {
+                console.error('خطأ في تعيين آية اليوم:', error);
+                addMessage('حدث خطأ أثناء تعيين آية اليوم');
+            }
+        }
+
+        // تحديث إحصائيات المستخدم
+        function updateUserStats(points, verses) {
+            document.getElementById('user-points').textContent = points || 0;
+            document.getElementById('user-verses').textContent = verses || 0;
+        }
+
         // إعداد الأحداث
         document.addEventListener('DOMContentLoaded', async () => {
             // تحقق إذا كان المستخدم مسجل مسبقاً
@@ -605,6 +736,17 @@
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     document.getElementById('add-quote').click();
+                }
+            });
+
+            // إضافة حدث لزر تعيين آية اليوم
+            document.getElementById('set-daily-verse').addEventListener('click', setDailyVerse);
+
+            // تحديث إحصائيات المستخدم عند التغيير
+            usersRef.child(userId).on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    updateUserStats(userData.points, userData.verses);
                 }
             });
 
