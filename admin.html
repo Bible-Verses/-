@@ -392,15 +392,72 @@
 
         @media (max-width: 768px) {
             .container {
-                padding: 10px;
+                padding: 5px;
             }
-            
             .admin-panel {
-                padding: 15px;
+                padding: 10px;
+                margin-top: 80px;
             }
-            
-            .message {
-                max-width: 95%;
+            .welcome-form {
+                padding: 12px;
+                max-width: 98vw;
+            }
+            .welcome-form h2 {
+                font-size: 1.2rem;
+            }
+            .input-group label {
+                font-size: 1rem;
+            }
+            .input-group input {
+                padding: 10px;
+                font-size: 1rem;
+            }
+            .start-button {
+                padding: 10px;
+                font-size: 1rem;
+            }
+            .user-header {
+                top: 8px;
+                right: 8px;
+                padding: 10px;
+                max-width: 95vw;
+            }
+            .user-header h3 {
+                font-size: 1.1rem;
+            }
+            .user-header p {
+                font-size: 0.95rem;
+            }
+            .user-header .stat {
+                font-size: 1rem;
+                padding: 4px 10px;
+            }
+            .chat-container {
+                padding: 8px;
+                max-height: 100px;
+            }
+            .input-container {
+                margin-bottom: 8px;
+            }
+            #quote-input {
+                padding: 8px;
+                font-size: 0.95rem;
+                height: 60px;
+            }
+            #add-quote {
+                padding: 8px;
+                font-size: 0.95rem;
+            }
+            .quotes-list {
+                padding: 8px;
+            }
+            #quotes-list li {
+                padding: 7px;
+                font-size: 0.85rem;
+            }
+            .save-all {
+                padding: 10px;
+                font-size: 1rem;
             }
         }
     </style>
@@ -440,12 +497,6 @@
         </div>
 
         <div class="admin-panel">
-            <div class="daily-verse-section">
-                <h2>آية اليوم</h2>
-                <textarea id="daily-verse-input" class="daily-verse-input" placeholder="أدخل آية اليوم هنا..."></textarea>
-                <button id="set-daily-verse" class="set-daily-verse">تعيين كآية اليوم</button>
-            </div>
-
             <div class="chat-container">
                 <div id="messages" class="messages"></div>
             </div>
@@ -650,6 +701,8 @@
 
         // إعداد الأحداث
         document.addEventListener('DOMContentLoaded', async () => {
+            // رسالة ترحيبية في الشات عند الدخول
+            addMessage('يلا قوم افتح كتابك المقدس واكتبلي ايات');
             // تحقق إذا كان المستخدم مسجل مسبقاً
             if (loadUserFromStorage()) {
                 // إخفاء شاشة الترحيب
@@ -657,6 +710,13 @@
                 welcomeScreen.style.display = 'none';
                 showUserHeader();
                 addMessage('مرحباً بك مجدداً!');
+                // تحميل النقاط وعدد الآيات للمستخدم الحالي
+                usersRef.child(userId).once('value').then(snapshot => {
+                    if (snapshot.exists()) {
+                        const userData = snapshot.val();
+                        updateUserStats(userData.points, userData.verses);
+                    }
+                });
             } else {
                 // شاشة التسجيل
                 document.getElementById('start-button').addEventListener('click', async () => {
