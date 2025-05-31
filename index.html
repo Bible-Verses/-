@@ -17,6 +17,8 @@
 
         html, body {
             height: 100%;
+            overflow: hidden;
+            position: fixed;
             width: 100%;
         }
 
@@ -27,8 +29,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
         }
 
         .container {
@@ -263,7 +263,7 @@
             overflow-y: auto;
             padding: 20px;
             scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
+            /* تخصيص شريط التمرير */
         }
 
         .leaderboard-list::-webkit-scrollbar {
@@ -453,11 +453,6 @@
         }
 
         @media (max-width: 768px) {
-            body {
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            
             .container {
                 padding: 5px;
             }
@@ -502,11 +497,6 @@
             .leaderboard-item {
                 font-size: 0.95rem;
                 padding: 8px;
-            }
-
-            .leaderboard-modal {
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
             }
         }
     </style>
@@ -564,32 +554,50 @@
         // تحميل آية اليوم
         async function loadDailyVerse() {
             try {
-                const today = new Date();
-                const year = today.getFullYear();
-                const month = (today.getMonth() + 1).toString().padStart(2, '0');
-                const day = today.getDate().toString().padStart(2, '0');
-                const hours = today.getHours();
-
-                // Determine the 12-hour segment (AM or PM)
-                const segment = hours < 12 ? 'AM' : 'PM';
-
-                // Create a unique key for the 12-hour segment of the day
-                const dailyVerseKey = `${year}-${month}-${day}-${segment}`; // e.g., 2023-10-27-AM or 2023-10-27-PM
-
-                const snapshot = await dailyVerseRef.child(dailyVerseKey).once('value');
+                const today = new Date().toISOString().split('T')[0];
+                const snapshot = await dailyVerseRef.child(today).once('value');
                 const quoteElement = document.getElementById('quote');
-
+                
                 if (snapshot.exists()) {
                     const verseData = snapshot.val();
-                    // Display the existing verse
-                    displayVerse(verseData, dailyVerseKey); // Pass the key for like functionality
-
-                    // Update views for the existing verse
-                    dailyVerseRef.child(dailyVerseKey).update({
+                    quoteElement.innerHTML = 
+                        <div class="verse-text">${verseData.text}</div>
+                        <div class="verse-info">
+                            <span class="verse-author">${verseData.authorName} - ${verseData.authorChurch}</span>
+                            <div class="daily-stats">
+                                <div class="daily-stat daily-likes">
+                                    <span>❤️</span>
+                                    <span>${verseData.likes || 0}</span>
+                                </div>
+                                <div class="daily-stat daily-views">
+                                    <span>👁️</span>
+                                    <span>${verseData.views || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                    ;
+                    
+                    // إضافة زر الإعجاب
+                    const likeButton = document.createElement('button');
+                    likeButton.className = 'like-button';
+                    likeButton.innerHTML = '🤍';
+                    likeButton.onclick = () => toggleLike(today);
+                    
+                    // التحقق من حالة الإعجاب
+                    const userLike = await likesRef.child(${today}/${currentUserId}).once('value');
+                    if (userLike.exists()) {
+                        likeButton.classList.add('liked');
+                        likeButton.innerHTML = '❤️';
+                    }
+                    
+                    quoteElement.appendChild(likeButton);
+                    
+                    // تحديث عدد المشاهدات
+                    await dailyVerseRef.child(today).update({
                         views: (verseData.views || 0) + 1
                     });
                 } else {
-                    // No verse for this segment, select a new random one
+                    // اختيار آية عشوائية من المتصدرين
                     const topUsersSnapshot = await usersRef.orderByChild('points').limitToLast(10).once('value');
                     const topUsers = [];
                     topUsersSnapshot.forEach((childSnapshot) => {
@@ -600,136 +608,80 @@
                     });
 
                     if (topUsers.length > 0) {
-                         // Get all quotes from all top users
-                        let allTopUserQuotes = [];
-                        for (const user of topUsers) {
-                             const userQuotesSnapshot = await quotesRef.orderByChild('userId').equalTo(user.id).once('value');
-                             userQuotesSnapshot.forEach((childSnapshot) => {
-                                 allTopUserQuotes.push(childSnapshot.val());
-                             });
-                        }
+                        // اختيار مستخدم عشوائي من المتصدرين
+                        const randomUser = topUsers[Math.floor(Math.random() * topUsers.length)];
+                        
+                        // جلب آيات هذا المستخدم
+                        const userQuotesSnapshot = await quotesRef.orderByChild('userId').equalTo(randomUser.id).once('value');
+                        const userQuotes = [];
+                        userQuotesSnapshot.forEach((childSnapshot) => {
+                            userQuotes.push(childSnapshot.val());
+                        });
 
-                        if (allTopUserQuotes.length > 0) {
-                            // Choose a random quote from the collected list
-                            const randomQuote = allTopUserQuotes[Math.floor(Math.random() * allTopUserQuotes.length)];
-
-                            // Save as today's verse for this segment
-                            await dailyVerseRef.child(dailyVerseKey).set({
+                        if (userQuotes.length > 0) {
+                            // اختيار آية عشوائية
+                            const randomQuote = userQuotes[Math.floor(Math.random() * userQuotes.length)];
+                            
+                            // حفظ كآية اليوم
+                            await dailyVerseRef.child(today).set({
                                 text: randomQuote.text,
                                 authorName: randomQuote.userName,
                                 authorChurch: randomQuote.churchName,
                                 authorId: randomQuote.userId,
-                                timestamp: new Date().toISOString(), // Timestamp of when this segment's verse was set
-                                likes: 0, // Start likes at 0 for the new segment
-                                views: 1 // Start views at 1 for the new segment
+                                timestamp: new Date().toISOString(),
+                                likes: 0,
+                                views: 0
                             });
 
-                            // Load and display the newly set verse
-                            // Recurse or call display function directly? Let's display directly.
-                            displayVerse({
-                                text: randomQuote.text,
-                                authorName: randomQuote.userName,
-                                authorChurch: randomQuote.churchName,
-                                authorId: randomQuote.userId,
-                                likes: 0,
-                                views: 1
-                            }, dailyVerseKey);
-
+                            // إعادة تحميل آية اليوم
+                            loadDailyVerse();
                         } else {
-                             quoteElement.textContent = "لا توجد آيات كافية لاختيار آية اليوم";
+                            quoteElement.textContent = "لا توجد آيات متاحة اليوم";
                         }
                     } else {
-                         quoteElement.textContent = "لا يوجد مستخدمون متصدرون لاختيار آية اليوم منهم";
+                        quoteElement.textContent = "لا توجد آيات متاحة اليوم";
                     }
                 }
-
             } catch (error) {
                 console.error("خطأ في تحميل آية اليوم:", error);
-                document.getElementById('quote').textContent = "حدث خطأ أثناء تحميل آية اليوم";
+                quoteElement.textContent = "حدث خطأ أثناء تحميل آية اليوم";
             }
         }
 
-        // Helper function to display the verse
-        function displayVerse(verseData, dailyVerseKey) { // Accept dailyVerseKey as argument
-             const quoteElement = document.getElementById('quote');
-             quoteElement.innerHTML = `
-                 <div class="verse-text">${verseData.text}</div>
-                 <div class="verse-info">
-                     <span class="verse-author">${verseData.authorName} - ${verseData.authorChurch}</span>
-                     <div class="daily-stats">
-                         <div class="daily-stat daily-likes">
-                             <span>❤️</span>
-                             <span>${verseData.likes || 0}</span>
-                         </div>
-                         <div class="daily-stat daily-views">
-                             <span>👁️</span>
-                             <span>${verseData.views || 0}</span>
-                         </div>
-                     </div>
-                 </div>
-             `;
-
-             // Add like button
-             const likeButton = document.createElement('button');
-             likeButton.className = 'like-button';
-             likeButton.innerHTML = '🤍';
-             // Use the passed dailyVerseKey in toggleLike
-             likeButton.onclick = () => toggleLike(dailyVerseKey);
-
-             // Check like status for the specific dailyVerseKey
-             likesRef.child(`${dailyVerseKey}/${currentUserId}`).once('value').then(userLike => {
-                 if (userLike.exists()) {
-                     likeButton.classList.add('liked');
-                     likeButton.innerHTML = '❤️';
-                 }
-             }).catch(error => console.error("Error checking like status:", error));
-
-             quoteElement.appendChild(likeButton);
-        }
-
         // تبديل حالة الإعجاب
-        // Modify toggleLike to accept the dailyVerseKey
-        async function toggleLike(dailyVerseKey) {
+        async function toggleLike(date) {
             if (!currentUserId) {
                 alert('الرجاء تسجيل الدخول أولاً');
                 return;
             }
-
+            
             try {
                 const likeButton = document.querySelector('.like-button');
-                // Use dailyVerseKey in the like reference
-                const likeRef = likesRef.child(`${dailyVerseKey}/${currentUserId}`);
+                const likeRef = likesRef.child(${date}/${currentUserId});
                 const snapshot = await likeRef.once('value');
-
+                
                 if (snapshot.exists()) {
-                    // إلغاء الإعجاب - Remove the like, decrement likes
+                    // إلغاء الإعجاب
                     await likeRef.remove();
-                    await dailyVerseRef.child(dailyVerseKey).update({
+                    await dailyVerseRef.child(date).update({
                         likes: firebase.database.ServerValue.increment(-1)
                     });
-                    // Do NOT decrement user points from main score
                     likeButton.classList.remove('liked');
                     likeButton.innerHTML = '🤍';
                 } else {
-                    // إضافة إعجاب - Add the like, increment likes
+                    // إضافة إعجاب
                     await likeRef.set(true);
-                    await dailyVerseRef.child(dailyVerseKey).update({
+                    await dailyVerseRef.child(date).update({
                         likes: firebase.database.ServerValue.increment(1)
                     });
-                    // Do NOT increment user points from main score here. Daily interaction is from likes count.
                     likeButton.classList.add('liked');
                     likeButton.innerHTML = '❤️';
                 }
-
-                // Update the displayed like count immediately
-                // Find the likes span within the current quoteElement
-                const currentLikesSpan = document.querySelector('#quote .daily-likes span:last-child');
-                if (currentLikesSpan) {
-                    const currentLikes = parseInt(currentLikesSpan.textContent) || 0;
-                     // Check if the like was added or removed and update count
-                    currentLikesSpan.textContent = snapshot.exists() ? currentLikes - 1 : currentLikes + 1;
-                }
-
+                
+                // تحديث عدد الإعجابات مباشرة
+                const dailyStats = document.querySelector('.daily-likes span:last-child');
+                const currentLikes = parseInt(dailyStats.textContent);
+                dailyStats.textContent = snapshot.exists() ? currentLikes - 1 : currentLikes + 1;
             } catch (error) {
                 console.error("خطأ في تحديث الإعجاب:", error);
             }
@@ -746,31 +698,12 @@
                     snapshot = await usersRef.orderByChild('points').limitToLast(10).once('value');
                 } else {
                     // جلب التفاعل اليومي
-                    const today = new Date();
-                    const year = today.getFullYear();
-                    const month = (today.getMonth() + 1).toString().padStart(2, '0');
-                    const day = today.getDate().toString().padStart(2, '0');
-                    
-                    // Get likes for both AM and PM segments of today
-                    const dailyVerseKeyAM = `${year}-${month}-${day}-AM`;
-                    const dailyVerseKeyPM = `${year}-${month}-${day}-PM`;
-                    
-                    const likesAMSnapshot = await likesRef.child(dailyVerseKeyAM).once('value');
-                    const likesPMSnapshot = await likesRef.child(dailyVerseKeyPM).once('value');
-
+                    const today = new Date().toISOString().split('T')[0];
+                    const dailyLikesSnapshot = await likesRef.child(today).once('value');
                     const userInteractions = {};
-
-                    // Count likes from AM segment
-                    if (likesAMSnapshot.exists()) {
-                        likesAMSnapshot.forEach((childSnapshot) => {
-                            const userId = childSnapshot.key;
-                            userInteractions[userId] = (userInteractions[userId] || 0) + 1;
-                        });
-                    }
-
-                    // Count likes from PM segment
-                    if (likesPMSnapshot.exists()) {
-                         likesPMSnapshot.forEach((childSnapshot) => {
+                    
+                    if (dailyLikesSnapshot.exists()) {
+                        dailyLikesSnapshot.forEach((childSnapshot) => {
                             const userId = childSnapshot.key;
                             userInteractions[userId] = (userInteractions[userId] || 0) + 1;
                         });
@@ -821,7 +754,7 @@
             users.forEach((user, index) => {
                 const li = document.createElement('li');
                 li.className = 'leaderboard-item';
-                li.innerHTML = `
+                li.innerHTML = 
                     <div class="user-info">
                         <span class="rank-badge">${index + 1}</span>
                         <div>
@@ -830,7 +763,7 @@
                         </div>
                     </div>
                     <div class="user-stats">
-                        ${type === 'points' ? `
+                        ${type === 'points' ? 
                             <div class="stat">
                                 <span class="stat-label">النقاط:</span>
                                 <span class="stat-value">${user.points || 0}</span>
@@ -839,14 +772,14 @@
                                 <span class="stat-label">الآيات:</span>
                                 <span class="stat-value">${user.verses || 0}</span>
                             </div>
-                        ` : `
+                         : 
                             <div class="stat">
                                 <span class="stat-label">التفاعل اليومي:</span>
                                 <span class="stat-value">${user.dailyInteractions || 0}</span>
                             </div>
-                        `}
+                        }
                     </div>
-                `;
+                ;
                 leaderboardList.appendChild(li);
             });
         }
@@ -907,9 +840,6 @@
                     event.preventDefault();
                 }
             }, { passive: false });
-
-            // إصلاح التمرير على iOS
-            document.body.addEventListener('touchstart', function() {});
 
             // البحث عن المستخدمين
             document.getElementById('search-input').addEventListener('input', async (e) => {
