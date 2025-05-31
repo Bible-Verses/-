@@ -382,6 +382,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const usersRef = db.ref('users');
+        const quotesRef = db.ref('quotes');
         
         let newQuotes = [];
         let userName = '';
@@ -394,23 +395,25 @@
                 addMessage('الرجاء إدخال اسمك واسم الكنيسة أولاً');
                 return false;
             }
-
             if (newQuotes.length === 0) {
                 addMessage('لا توجد آيات جديدة للحفظ.');
                 return false;
             }
-            
             const saveButton = document.getElementById('save-all');
             const originalText = saveButton.textContent;
             saveButton.innerHTML = '<span class="loading"></span> جاري الحفظ...';
             saveButton.disabled = true;
-            
             try {
-                const batch = db.ref().push();
-                
-                // إضافة الآيات الجديدة
+                // جلب بيانات المستخدم الحالية
+                const userSnap = await usersRef.child(userId).get();
+                let currentVerses = 0, currentPoints = 0;
+                if (userSnap.exists()) {
+                    currentVerses = userSnap.val().verses || 0;
+                    currentPoints = userSnap.val().points || 0;
+                }
+                // إضافة الآيات وتحديث رصيد المستخدم
                 for (const quote of newQuotes) {
-                    batch.push().set({
+                    await quotesRef.push({
                         text: quote,
                         userId: userId,
                         userName: userName,
@@ -418,24 +421,21 @@
                         timestamp: new Date().toISOString()
                     });
                 }
-                
-                await batch.commit();
-                
+                await usersRef.child(userId).update({
+                    verses: currentVerses + newQuotes.length,
+                    points: currentPoints + (newQuotes.length * 5)
+                });
                 addMessage(`تم حفظ ${newQuotes.length} آية جديدة بنجاح!`);
                 newQuotes = [];
                 document.getElementById('quotes-list').innerHTML = '';
-                
                 saveButton.innerHTML = originalText;
                 saveButton.disabled = false;
-                
                 return true;
             } catch (error) {
                 addMessage('حدث خطأ أثناء حفظ الآيات.');
                 console.error('خطأ في حفظ الآيات:', error);
-                
                 saveButton.innerHTML = originalText;
                 saveButton.disabled = false;
-                
                 return false;
             }
         }
@@ -446,13 +446,10 @@
                 addMessage('الرجاء إدخال اسمك واسم الكنيسة أولاً');
                 return;
             }
-
             const quotesList = document.getElementById('quotes-list');
             const listItem = document.createElement('li');
-            
             const quoteText = document.createElement('span');
             quoteText.textContent = quote;
-            
             const deleteButton = document.createElement('button');
             deleteButton.textContent = 'حذف';
             deleteButton.classList.add('delete-quote');
@@ -461,7 +458,6 @@
                 newQuotes = newQuotes.filter(q => q !== quote);
                 addMessage(`تم حذف الآية: "${quote}"`);
             });
-            
             listItem.appendChild(quoteText);
             listItem.appendChild(deleteButton);
             quotesList.appendChild(listItem);
@@ -531,12 +527,10 @@
                 document.getElementById('start-button').addEventListener('click', async () => {
                     userName = document.getElementById('welcome-name').value.trim();
                     churchName = document.getElementById('welcome-church').value.trim();
-
                     if (!userName || !churchName) {
                         alert('الرجاء إدخال اسمك واسم الكنيسة');
                         return;
                     }
-
                     try {
                         // حفظ بيانات المستخدم في Realtime Database
                         const newUserRef = usersRef.push();
@@ -559,27 +553,30 @@
                         addMessage('تم التسجيل بنجاح!');
                     } catch (error) {
                         console.error('خطأ في تسجيل المستخدم:', error);
-                        alert('حدث خطأ أثناء تسجيل المستخدم. يرجى المحاولة مرة أخرى.\\n' + error.message);
+                        alert('حدث خطأ أثناء تسجيل المستخدم. يرجى المحاولة مرة أخرى.\n' + error.message);
                     }
                 });
             }
 
+            // إضافة الآية عند الضغط على زر "إضافة"
             document.getElementById('add-quote').addEventListener('click', () => {
-                const quoteInput = document.getElementById('quote-input');
-                const quote = quoteInput.value.trim();
-                
-                if (quote) {
-                    newQuotes.push(quote);
-                    addQuoteToList(quote);
-                    addMessage(`تم إضافة الآية: "${quote}"`);
-                    quoteInput.value = '';
-                } else {
-                    addMessage('الرجاء إدخال آية قبل الإضافة.');
+                const input = document.getElementById('quote-input');
+                const quote = input.value.trim();
+                if (!quote) {
+                    addMessage('الرجاء إدخال الآية قبل الإضافة.');
+                    return;
                 }
+                newQuotes.push(quote);
+                addQuoteToList(quote);
+                addMessage(`تمت إضافة الآية: "${quote}"`, 'user');
+                input.value = '';
             });
-            
-            document.getElementById('save-all').addEventListener('click', saveAllQuotes);
-            
+
+            // حفظ جميع الآيات عند الضغط على زر "حفظ جميع الآيات"
+            document.getElementById('save-all').addEventListener('click', async () => {
+                await saveAllQuotes();
+            });
+
             document.getElementById('quote-input').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
