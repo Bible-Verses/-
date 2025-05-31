@@ -185,6 +185,7 @@
             z-index: 1000;
             flex-direction: column;
             overflow: hidden;
+            touch-action: pan-y;
         }
 
         .leaderboard-header {
@@ -192,13 +193,14 @@
             top: 0;
             left: 0;
             right: 0;
-            padding: 20px 10px 10px 10px;
+            padding: 15px 10px;
             background-color: #0a1a3a;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 1001;
+            height: 50px;
         }
 
         .close-btn {
@@ -212,15 +214,16 @@
 
         .search-bar {
             position: fixed;
-            top: 60px;
+            top: 50px;
             left: 0;
             right: 0;
             width: 100%;
-            padding: 15px;
+            padding: 10px;
             display: flex;
             justify-content: center;
             z-index: 1001;
             background-color: #0a1a3a;
+            height: 60px;
         }
 
         #search-input {
@@ -248,15 +251,16 @@
 
         .leaderboard-tabs {
             position: fixed;
-            top: 130px;
+            top: 110px;
             left: 0;
             right: 0;
             display: flex;
             gap: 10px;
-            padding: 15px;
+            padding: 10px;
             background-color: #0a1a3a;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 1001;
+            height: 50px;
         }
 
         .tab-button {
@@ -275,12 +279,16 @@
         }
 
         .leaderboard-list {
+            position: fixed;
+            top: 160px;
+            left: 0;
+            right: 0;
+            bottom: 0;
             list-style-type: none;
-            padding: 20px;
-            margin-top: 200px;
-            height: calc(100vh - 200px);
-            overflow-y: auto;
+            padding: 10px;
+            overflow-y: scroll;
             -webkit-overflow-scrolling: touch;
+            background-color: #0a1a3a;
         }
 
         .leaderboard-list::-webkit-scrollbar {
@@ -302,22 +310,11 @@
         }
 
         .leaderboard-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            margin-bottom: 10px;
             background-color: rgba(255, 255, 255, 0.05);
             border-radius: 10px;
-            color: #fff;
-            font-size: 1.1rem;
+            padding: 15px;
+            margin-bottom: 10px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .leaderboard-item:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            transform: translateX(-5px);
         }
 
         .user-info {
@@ -499,11 +496,13 @@
             }
 
             .leaderboard-header {
-                padding: 10px 5px 5px 5px;
+                padding: 10px;
+                height: 45px;
             }
 
             .search-bar {
-                padding: 10px;
+                top: 45px;
+                height: 55px;
             }
 
             #search-input {
@@ -513,17 +512,18 @@
             }
 
             .leaderboard-tabs {
-                top: 120px;
+                top: 100px;
+                height: 45px;
             }
 
             .leaderboard-list {
-                margin-top: 180px;
-                height: calc(100vh - 180px);
+                top: 145px;
+                padding: 8px;
             }
 
             .leaderboard-item {
-                font-size: 0.95rem;
-                padding: 8px;
+                padding: 12px;
+                margin-bottom: 8px;
             }
 
             .leaderboard-modal {
