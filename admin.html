@@ -123,11 +123,16 @@
 
         .user-header {
             position: fixed;
-            top: 0;
-            right: 0;
+            top: 20px;
+            right: 20px;
             padding: 20px;
             text-align: right;
             z-index: 100;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .user-header h3 {
@@ -152,7 +157,7 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             max-height: 100%;
             overflow-y: auto;
-            margin-top: 100px;
+            margin-top: 120px;
         }
 
         .chat-container {
@@ -531,16 +536,37 @@
                         return;
                     }
                     try {
-                        // حفظ بيانات المستخدم في Realtime Database
-                        const newUserRef = usersRef.push();
-                        userId = newUserRef.key;
-                        await newUserRef.set({
-                            name: userName,
-                            churchName: churchName,
-                            points: 0,
-                            verses: 0,
-                            createdAt: new Date().toISOString()
-                        });
+                        // البحث عن المستخدم الحالي
+                        const snapshot = await usersRef.orderByChild('name').equalTo(userName).once('value');
+                        
+                        if (snapshot.exists()) {
+                            // المستخدم موجود، استرجاع بياناته
+                            const userData = Object.entries(snapshot.val())[0];
+                            userId = userData[0];
+                            const userInfo = userData[1];
+                            
+                            // تحديث اسم الكنيسة إذا تم تغييره
+                            if (userInfo.churchName !== churchName) {
+                                await usersRef.child(userId).update({
+                                    churchName: churchName
+                                });
+                            }
+                            
+                            addMessage(`مرحباً بعودتك ${userName}! نقاطك الحالية: ${userInfo.points || 0}`);
+                        } else {
+                            // إنشاء مستخدم جديد
+                            const newUserRef = usersRef.push();
+                            userId = newUserRef.key;
+                            await newUserRef.set({
+                                name: userName,
+                                churchName: churchName,
+                                points: 0,
+                                verses: 0,
+                                createdAt: new Date().toISOString()
+                            });
+                            addMessage('تم التسجيل بنجاح!');
+                        }
+                        
                         saveUserToStorage();
                         showUserHeader();
                         // إخفاء شاشة الترحيب
@@ -549,7 +575,6 @@
                         setTimeout(() => {
                             welcomeScreen.style.display = 'none';
                         }, 500);
-                        addMessage('تم التسجيل بنجاح!');
                     } catch (error) {
                         console.error('خطأ في تسجيل المستخدم:', error);
                         alert('حدث خطأ أثناء تسجيل المستخدم. يرجى المحاولة مرة أخرى.\n' + error.message);
