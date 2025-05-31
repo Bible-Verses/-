@@ -56,6 +56,7 @@
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             transition: all 0.3s ease;
+            z-index: 100;
         }
 
         .leaderboard-btn:hover {
@@ -75,6 +76,7 @@
             width: 95%;
             max-width: 1200px;
             margin: 0 auto;
+            position: relative;
         }
 
         h1 {
@@ -86,15 +88,17 @@
         }
 
         .quote-box {
-            background-color: transparent;
-            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
             padding: 30px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
             min-height: 200px;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
         }
 
         #quote {
@@ -105,6 +109,69 @@
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             max-width: 1000px;
             margin: 0 auto;
+            margin-bottom: 20px;
+        }
+
+        .verse-info {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .verse-author {
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .daily-stats {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .daily-stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+        }
+
+        .daily-likes {
+            color: #ff4444;
+        }
+
+        .daily-views {
+            color: #4CAF50;
+        }
+
+        .like-button {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            padding: 10px;
+            margin-top: 15px;
+            transform-origin: center;
+        }
+
+        .like-button.liked {
+            color: #ff4444;
+            transform: scale(1.2);
+        }
+
+        .like-button:active {
+            transform: scale(0.9);
         }
 
         .leaderboard-modal {
@@ -112,15 +179,16 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             background-color: #0a1a3a;
             z-index: 1000;
             flex-direction: column;
+            overflow: auto;
         }
 
         .leaderboard-header {
-            padding: 20px;
+            padding: 20px 10px 10px 10px;
             background-color: rgba(255, 255, 255, 0.05);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
@@ -132,22 +200,21 @@
             background: none;
             border: none;
             color: #fff;
-            font-size: 1.5rem;
+            font-size: 1.7rem;
             cursor: pointer;
             padding: 5px;
         }
 
-        .search-container {
-            padding: 20px;
-            background-color: rgba(255, 255, 255, 0.05);
-            position: sticky;
-            top: 0;
-            z-index: 10;
+        .search-bar {
+            width: 90%;
+            margin: 15px auto 0 auto;
+            display: flex;
+            justify-content: center;
         }
 
         #search-input {
             width: 100%;
-            padding: 15px;
+            padding: 12px;
             border: 2px solid rgba(255, 255, 255, 0.2);
             background-color: rgba(255, 255, 255, 0.1);
             color: #fff;
@@ -167,6 +234,29 @@
             color: rgba(255, 255, 255, 0.6);
         }
 
+        .leaderboard-tabs {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background-color: #4CAF50;
+        }
+
         .leaderboard-list {
             list-style-type: none;
             flex: 1;
@@ -178,6 +268,7 @@
         .leaderboard-item {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             padding: 15px;
             margin-bottom: 10px;
             background-color: rgba(255, 255, 255, 0.05);
@@ -195,9 +286,23 @@
 
         .user-info {
             display: flex;
-            flex-direction: column;
-            gap: 5px;
+            align-items: center;
+            gap: 15px;
             flex: 1;
+        }
+
+        .rank-badge {
+            background-color: #4CAF50;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         .user-name {
@@ -213,8 +318,8 @@
 
         .user-stats {
             display: flex;
-            gap: 15px;
-            align-items: center;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .stat {
@@ -222,15 +327,17 @@
             align-items: center;
             gap: 5px;
             background-color: rgba(255, 255, 255, 0.1);
-            padding: 8px 12px;
+            padding: 8px 15px;
             border-radius: 8px;
-            min-width: 100px;
-            justify-content: center;
+            min-width: 120px;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+            cursor: pointer;
         }
 
         .stat:hover {
             background-color: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
+            transform: translateX(-5px);
         }
 
         .stat-label {
@@ -242,21 +349,6 @@
             color: #4CAF50;
             font-weight: bold;
             font-size: 1.2rem;
-        }
-
-        .rank-badge {
-            background-color: #4CAF50;
-            color: white;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-left: 10px;
-            font-size: 1.2rem;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         .loading {
@@ -281,107 +373,111 @@
         }
 
         .user-header {
-            position: fixed;
+            position: absolute;
             top: 20px;
-            right: 20px;
-            padding: 20px;
-            text-align: right;
-            z-index: 100;
-            background-color: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 110;
+            min-width: 220px;
+            max-width: 350px;
+            background-color: rgba(255,255,255,0.08);
             border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255,255,255,0.18);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            padding: 18px 20px 12px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 8px;
         }
-
-        .like-button {
-            background: none;
-            border: none;
+        .user-header h3 {
+            color: #4CAF50;
+            font-size: 1.4rem;
+            margin: 0 0 2px 0;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .user-header p {
             color: #fff;
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            padding: 5px;
-        }
-
-        .like-button.liked {
-            color: #ff4444;
-        }
-
-        .verse-info {
-            margin-top: 15px;
             font-size: 1.1rem;
-            color: rgba(255, 255, 255, 0.8);
+            margin: 0 0 2px 0;
         }
-
-        .verse-author {
+        .user-header .user-stats {
+            margin-top: 4px;
+        }
+        .user-header .stat {
+            background: rgba(255,255,255,0.13);
+            border-radius: 8px;
+            padding: 6px 18px;
+            font-size: 1.1rem;
             color: #4CAF50;
             font-weight: bold;
+            display: inline-block;
         }
-
-        .daily-stats {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-            font-size: 1rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .daily-likes {
-            color: #ff4444;
-        }
-
-        .daily-views {
-            color: #4CAF50;
+        @media (max-width: 600px) {
+            .user-header {
+                min-width: 150px;
+                max-width: 95vw;
+                padding: 10px 5px 8px 5px;
+            }
+            .user-header h3 {
+                font-size: 1.1rem;
+            }
+            .user-header p {
+                font-size: 0.95rem;
+            }
+            .user-header .stat {
+                font-size: 1rem;
+                padding: 4px 10px;
+            }
         }
 
         @media (max-width: 768px) {
             .container {
-                padding: 10px;
+                padding: 5px;
             }
             
             .quote-container {
-                padding: 20px;
+                padding: 10px;
             }
             
             h1 {
-                font-size: 1.8rem;
+                font-size: 1.2rem;
             }
             
             #quote {
-                font-size: 1.4rem;
-            }
-
-            .leaderboard-btn {
-                top: 10px;
-                right: 10px;
-                padding: 10px 20px;
                 font-size: 1rem;
             }
 
-            .leaderboard-header {
-                padding: 15px;
+            .leaderboard-btn {
+                top: 8px;
+                right: 8px;
+                padding: 7px 12px;
+                font-size: 0.95rem;
             }
 
-            .search-container {
-                padding: 15px;
+            .leaderboard-header {
+                padding: 10px 5px 5px 5px;
+            }
+
+            .search-bar {
+                width: 98%;
+                margin: 10px auto 0 auto;
+            }
+
+            #search-input {
+                padding: 8px;
+                font-size: 0.95rem;
             }
 
             .leaderboard-list {
-                padding: 15px;
+                padding: 8px;
             }
 
             .leaderboard-item {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .user-stats {
-                justify-content: space-between;
-            }
-
-            .stat {
-                min-width: 80px;
+                font-size: 0.95rem;
+                padding: 8px;
             }
         }
     </style>
@@ -404,21 +500,14 @@
             <h2 style="color: #fff; margin: 0;">المتصدرون</h2>
             <button class="close-btn">&times;</button>
         </div>
-        <div class="search-container">
-            <input type="text" id="search-input" placeholder="ابحث عن اسمك أو اسم كنيستك...">
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="ابحث عن اسم المستخدم أو الكنيسة...">
+        </div>
+        <div class="leaderboard-tabs">
+            <button class="tab-button active" data-tab="points">المتصدرون في النقاط</button>
+            <button class="tab-button" data-tab="daily">المتصدرون في التفاعل اليومي</button>
         </div>
         <ul id="leaderboard-list" class="leaderboard-list"></ul>
-    </div>
-
-    <div class="user-header">
-        <h3>معلومات المستخدم</h3>
-        <p>الكنيسة: <span id="user-church"></span></p>
-        <div class="user-stats">
-            <div class="stat">
-                <span class="stat-label">النقاط:</span>
-                <span class="stat-value" id="user-points">0</span>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -455,10 +544,16 @@
                     quoteElement.innerHTML = `
                         <div class="verse-text">${verseData.text}</div>
                         <div class="verse-info">
-                            <span class="verse-author">${verseData.authorName}</span>
+                            <span class="verse-author">${verseData.authorName} - ${verseData.authorChurch}</span>
                             <div class="daily-stats">
-                                <span class="daily-likes">❤️ ${verseData.likes || 0}</span>
-                                <span class="daily-views">👁️ ${verseData.views || 0}</span>
+                                <div class="daily-stat daily-likes">
+                                    <span>❤️</span>
+                                    <span>${verseData.likes || 0}</span>
+                                </div>
+                                <div class="daily-stat daily-views">
+                                    <span>👁️</span>
+                                    <span>${verseData.views || 0}</span>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -483,10 +578,54 @@
                         views: (verseData.views || 0) + 1
                     });
                 } else {
-                    quoteElement.textContent = "لا توجد آية اليوم بعد";
+                    // اختيار آية عشوائية من المتصدرين
+                    const topUsersSnapshot = await usersRef.orderByChild('points').limitToLast(10).once('value');
+                    const topUsers = [];
+                    topUsersSnapshot.forEach((childSnapshot) => {
+                        topUsers.push({
+                            id: childSnapshot.key,
+                            ...childSnapshot.val()
+                        });
+                    });
+
+                    if (topUsers.length > 0) {
+                        // اختيار مستخدم عشوائي من المتصدرين
+                        const randomUser = topUsers[Math.floor(Math.random() * topUsers.length)];
+                        
+                        // جلب آيات هذا المستخدم
+                        const userQuotesSnapshot = await quotesRef.orderByChild('userId').equalTo(randomUser.id).once('value');
+                        const userQuotes = [];
+                        userQuotesSnapshot.forEach((childSnapshot) => {
+                            userQuotes.push(childSnapshot.val());
+                        });
+
+                        if (userQuotes.length > 0) {
+                            // اختيار آية عشوائية
+                            const randomQuote = userQuotes[Math.floor(Math.random() * userQuotes.length)];
+                            
+                            // حفظ كآية اليوم
+                            await dailyVerseRef.child(today).set({
+                                text: randomQuote.text,
+                                authorName: randomQuote.userName,
+                                authorChurch: randomQuote.churchName,
+                                authorId: randomQuote.userId,
+                                timestamp: new Date().toISOString(),
+                                likes: 0,
+                                views: 0
+                            });
+
+                            // إعادة تحميل آية اليوم
+                            loadDailyVerse();
+                        } else {
+                            quoteElement.textContent = "لا توجد آيات متاحة اليوم";
+                        }
+                    } else {
+                        quoteElement.textContent = "لا توجد آيات متاحة اليوم";
+                    }
                 }
             } catch (error) {
                 console.error("خطأ في تحميل آية اليوم:", error);
+                quoteElement.textContent = "حدث خطأ أثناء تحميل آية اليوم";
             }
         }
 
@@ -498,6 +637,7 @@
             }
             
             try {
+                const likeButton = document.querySelector('.like-button');
                 const likeRef = likesRef.child(`${date}/${currentUserId}`);
                 const snapshot = await likeRef.once('value');
                 
@@ -507,27 +647,65 @@
                     await dailyVerseRef.child(date).update({
                         likes: firebase.database.ServerValue.increment(-1)
                     });
+                    likeButton.classList.remove('liked');
+                    likeButton.innerHTML = '🤍';
                 } else {
                     // إضافة إعجاب
                     await likeRef.set(true);
                     await dailyVerseRef.child(date).update({
                         likes: firebase.database.ServerValue.increment(1)
                     });
+                    likeButton.classList.add('liked');
+                    likeButton.innerHTML = '❤️';
                 }
                 
-                // تحديث واجهة المستخدم
-                loadDailyVerse();
+                // تحديث عدد الإعجابات مباشرة
+                const dailyStats = document.querySelector('.daily-likes span:last-child');
+                const currentLikes = parseInt(dailyStats.textContent);
+                dailyStats.textContent = snapshot.exists() ? currentLikes - 1 : currentLikes + 1;
             } catch (error) {
                 console.error("خطأ في تحديث الإعجاب:", error);
             }
         }
 
         // تحميل المتصدرين
-        async function loadLeaderboard() {
+        async function loadLeaderboard(tab = 'points') {
             try {
-                const snapshot = await usersRef.orderByChild('points').limitToLast(10).once('value');
                 const leaderboardList = document.getElementById('leaderboard-list');
                 leaderboardList.innerHTML = '';
+
+                let snapshot;
+                if (tab === 'points') {
+                    snapshot = await usersRef.orderByChild('points').limitToLast(10).once('value');
+                } else {
+                    // جلب التفاعل اليومي
+                    const today = new Date().toISOString().split('T')[0];
+                    const dailyLikesSnapshot = await likesRef.child(today).once('value');
+                    const userInteractions = {};
+                    
+                    if (dailyLikesSnapshot.exists()) {
+                        dailyLikesSnapshot.forEach((childSnapshot) => {
+                            const userId = childSnapshot.key;
+                            userInteractions[userId] = (userInteractions[userId] || 0) + 1;
+                        });
+                    }
+
+                    // جلب معلومات المستخدمين
+                    const usersSnapshot = await usersRef.once('value');
+                    const users = [];
+                    usersSnapshot.forEach((childSnapshot) => {
+                        const user = childSnapshot.val();
+                        users.push({
+                            id: childSnapshot.key,
+                            ...user,
+                            dailyInteractions: userInteractions[childSnapshot.key] || 0
+                        });
+                    });
+
+                    // ترتيب المستخدمين حسب التفاعل اليومي
+                    users.sort((a, b) => b.dailyInteractions - a.dailyInteractions);
+                    return displayLeaderboard(users.slice(0, 10), 'daily');
+                }
 
                 if (!snapshot.exists()) {
                     leaderboardList.innerHTML = '<div class="no-results">لا يوجد متسابقين بعد</div>';
@@ -544,81 +722,29 @@
 
                 // ترتيب المستخدمين تنازلياً حسب النقاط
                 users.sort((a, b) => (b.points || 0) - (a.points || 0));
-
-                users.forEach((user, index) => {
-                    const li = document.createElement('li');
-                    li.className = 'leaderboard-item';
-                    li.innerHTML = `
-                        <div class="user-info">
-                            <div style="display: flex; align-items: center;">
-                                <span class="rank-badge">${index + 1}</span>
-                                <span class="user-name">${user.name}</span>
-                            </div>
-                            <span class="church-name">${user.churchName || ''}</span>
-                        </div>
-                        <div class="user-stats">
-                            <div class="stat">
-                                <span class="stat-label">النقاط:</span>
-                                <span class="stat-value">${user.points || 0}</span>
-                            </div>
-                            <div class="stat">
-                                <span class="stat-label">الآيات:</span>
-                                <span class="stat-value">${user.verses || 0}</span>
-                            </div>
-                        </div>
-                    `;
-                    leaderboardList.appendChild(li);
-                });
+                displayLeaderboard(users, 'points');
             } catch (error) {
                 console.error("خطأ في تحميل المتصدرين:", error);
             }
         }
 
-        // البحث عن المستخدمين
-        document.getElementById('search-input').addEventListener('input', async (e) => {
-            const searchTerm = e.target.value.toLowerCase();
+        function displayLeaderboard(users, type) {
             const leaderboardList = document.getElementById('leaderboard-list');
-            
-            if (searchTerm.length < 2) {
-                loadLeaderboard();
-                return;
-            }
+            leaderboardList.innerHTML = '';
 
-            try {
-                const snapshot = await usersRef.once('value');
-                leaderboardList.innerHTML = '';
-                let found = false;
-
-                const users = [];
-                snapshot.forEach((childSnapshot) => {
-                    users.push({
-                        id: childSnapshot.key,
-                        ...childSnapshot.val()
-                    });
-                });
-
-                const filteredUsers = users.filter(user => 
-                    user.name.toLowerCase().includes(searchTerm) || 
-                    (user.churchName && user.churchName.toLowerCase().includes(searchTerm))
-                );
-
-                if (filteredUsers.length === 0) {
-                    leaderboardList.innerHTML = '<div class="no-results">لا توجد نتائج للبحث</div>';
-                    return;
-                }
-
-                filteredUsers.forEach((user, index) => {
-                    const li = document.createElement('li');
-                    li.className = 'leaderboard-item';
-                    li.innerHTML = `
-                        <div class="user-info">
-                            <div style="display: flex; align-items: center;">
-                                <span class="rank-badge">${index + 1}</span>
-                                <span class="user-name">${user.name}</span>
-                            </div>
-                            <span class="church-name">${user.churchName || ''}</span>
+            users.forEach((user, index) => {
+                const li = document.createElement('li');
+                li.className = 'leaderboard-item';
+                li.innerHTML = `
+                    <div class="user-info">
+                        <span class="rank-badge">${index + 1}</span>
+                        <div>
+                            <div class="user-name">${user.name}</div>
+                            <div class="church-name">${user.churchName || ''}</div>
                         </div>
-                        <div class="user-stats">
+                    </div>
+                    <div class="user-stats">
+                        ${type === 'points' ? `
                             <div class="stat">
                                 <span class="stat-label">النقاط:</span>
                                 <span class="stat-value">${user.points || 0}</span>
@@ -627,16 +753,19 @@
                                 <span class="stat-label">الآيات:</span>
                                 <span class="stat-value">${user.verses || 0}</span>
                             </div>
-                        </div>
-                    `;
-                    leaderboardList.appendChild(li);
-                });
-            } catch (error) {
-                console.error("خطأ في البحث:", error);
-            }
-        });
+                        ` : `
+                            <div class="stat">
+                                <span class="stat-label">التفاعل اليومي:</span>
+                                <span class="stat-value">${user.dailyInteractions || 0}</span>
+                            </div>
+                        `}
+                    </div>
+                `;
+                leaderboardList.appendChild(li);
+            });
+        }
 
-        // تحميل البيانات عند تحميل الصفحة
+        // إعداد أحداث الأزرار
         document.addEventListener('DOMContentLoaded', () => {
             // تحميل بيانات المستخدم من localStorage
             const stored = localStorage.getItem('aya-user');
@@ -647,22 +776,7 @@
                         currentUserId = data.userId;
                         currentUserName = data.userName;
                         currentUserChurch = data.churchName;
-                        
-                        // إظهار معلومات المستخدم
-                        const userHeader = document.createElement('div');
-                        userHeader.className = 'user-header';
-                        userHeader.innerHTML = `
-                            <h3>${currentUserName}</h3>
-                            <p>${currentUserChurch}</p>
-                            <div class="user-stats">
-                                <div class="stat">
-                                    <span class="stat-label">النقاط:</span>
-                                    <span class="stat-value" id="user-points">0</span>
-                                </div>
-                            </div>
-                        `;
-                        document.body.appendChild(userHeader);
-                        
+                        showUserHeader();
                         // تحميل نقاط المستخدم
                         usersRef.child(currentUserId).on('value', (snapshot) => {
                             if (snapshot.exists()) {
@@ -675,7 +789,31 @@
             }
 
             loadDailyVerse();
-            loadLeaderboard();
+            loadLeaderboard('points');
+
+            // إعداد أحداث التبويبات
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    loadLeaderboard(button.dataset.tab);
+                });
+            });
+
+            // إعداد أحداث المتصدرين
+            const leaderboardBtn = document.querySelector('.leaderboard-btn');
+            const leaderboardModal = document.querySelector('.leaderboard-modal');
+            const closeBtn = document.querySelector('.close-btn');
+
+            leaderboardBtn.addEventListener('click', () => {
+                leaderboardModal.style.display = 'flex';
+                loadLeaderboard('points');
+            });
+
+            closeBtn.addEventListener('click', () => {
+                leaderboardModal.style.display = 'none';
+            });
 
             // منع التكبير على الموبايل
             document.addEventListener('touchmove', function(event) {
@@ -683,7 +821,49 @@
                     event.preventDefault();
                 }
             }, { passive: false });
+
+            // البحث عن المستخدمين
+            document.getElementById('search-input').addEventListener('input', async (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const leaderboardList = document.getElementById('leaderboard-list');
+                if (searchTerm.length < 1) {
+                    // إعادة تحميل حسب التبويب الحالي
+                    const activeTab = document.querySelector('.tab-button.active').dataset.tab;
+                    loadLeaderboard(activeTab);
+                    return;
+                }
+                try {
+                    const snapshot = await usersRef.once('value');
+                    leaderboardList.innerHTML = '';
+                    const users = [];
+                    snapshot.forEach((childSnapshot) => {
+                        users.push({
+                            id: childSnapshot.key,
+                            ...childSnapshot.val()
+                        });
+                    });
+                    const filteredUsers = users.filter(user => 
+                        (user.name && user.name.toLowerCase().includes(searchTerm)) || 
+                        (user.churchName && user.churchName.toLowerCase().includes(searchTerm))
+                    );
+                    if (filteredUsers.length === 0) {
+                        leaderboardList.innerHTML = '<div class="no-results">لا توجد نتائج للبحث</div>';
+                        return;
+                    }
+                    // ترتيب حسب النقاط
+                    filteredUsers.sort((a, b) => (b.points || 0) - (a.points || 0));
+                    displayLeaderboard(filteredUsers, document.querySelector('.tab-button.active').dataset.tab);
+                } catch (error) {
+                    console.error("خطأ في البحث:", error);
+                }
+            });
         });
+
+        // تحميل بيانات المستخدم من localStorage
+        function showUserHeader() {
+            document.getElementById('user-name-display').textContent = currentUserName || '';
+            document.getElementById('church-name-display').textContent = currentUserChurch || '';
+        }
     </script>
 </body>
 </html>
