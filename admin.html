@@ -325,7 +325,7 @@
         }
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
     <div class="welcome-screen">
@@ -369,19 +369,18 @@
 
     <script>
         const firebaseConfig = {
-  apiKey: "AIzaSyCGIsZlMkrHbx8z6sEBc17CPK9XAJDKFyY",
-  authDomain: "ayaat-23b58.firebaseapp.com",
-  databaseURL: "https://ayaat-23b58-default-rtdb.firebaseio.com",
-  projectId: "ayaat-23b58",
-  storageBucket: "ayaat-23b58.firebasestorage.app",
-  messagingSenderId: "890766245823",
-  appId: "1:890766245823:web:faf78de2006c033d1dab0a"
-};
+            apiKey: "AIzaSyB6AMEjbQBfwkEhhzIGB0vuXU-R54_n6-M",
+            authDomain: "ayaaat-6561e.firebaseapp.com",
+            projectId: "ayaaat-6561e",
+            storageBucket: "ayaaat-6561e.appspot.com",
+            messagingSenderId: "872879957881",
+            appId: "1:872879957881:web:f5bdbf362cc115f74471a8",
+            measurementId: "G-4E9TCZFZEM"
+        };
 
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const quotesCollection = db.collection('quotes');
-        const usersCollection = db.collection('users');
+        const db = firebase.database();
+        const usersRef = db.ref('users');
         
         let newQuotes = [];
         let userName = '';
@@ -406,39 +405,22 @@
             saveButton.disabled = true;
             
             try {
-                const batch = db.batch();
-                const userRef = usersCollection.doc(userId);
-                
-                // تحديث نقاط المستخدم
-                const userDoc = await userRef.get();
-                const currentPoints = userDoc.data()?.points || 0;
-                const currentVerses = userDoc.data()?.verses || 0;
+                const batch = db.ref().push();
                 
                 // إضافة الآيات الجديدة
                 for (const quote of newQuotes) {
-                    const newQuoteRef = quotesCollection.doc();
-                    batch.set(newQuoteRef, { 
+                    batch.push().set({
                         text: quote,
                         userId: userId,
                         userName: userName,
                         churchName: churchName,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        timestamp: new Date().toISOString()
                     });
                 }
-
-                // تحديث نقاط المستخدم (5 نقاط لكل آية)
-                batch.update(userRef, {
-                    name: userName,
-                    churchName: churchName,
-                    points: currentPoints + (newQuotes.length * 5),
-                    verses: currentVerses + newQuotes.length,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                });
                 
                 await batch.commit();
                 
                 addMessage(`تم حفظ ${newQuotes.length} آية جديدة بنجاح!`);
-                addMessage(`حصلت على ${newQuotes.length * 5} نقطة!`);
                 newQuotes = [];
                 document.getElementById('quotes-list').innerHTML = '';
                 
@@ -555,19 +537,16 @@
                     }
 
                     try {
-                        userId = generateUserId();
-                        // تحقق من وجود المستخدم في قاعدة البيانات
-                        const userDoc = await usersCollection.doc(userId).get();
-                        if (!userDoc.exists) {
-                            await usersCollection.doc(userId).set({
-                                name: userName,
-                                churchName: churchName,
-                                points: 0,
-                                verses: 0,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                        }
+                        // حفظ بيانات المستخدم في Realtime Database
+                        const newUserRef = usersRef.push();
+                        userId = newUserRef.key;
+                        await newUserRef.set({
+                            name: userName,
+                            churchName: churchName,
+                            points: 0,
+                            verses: 0,
+                            createdAt: new Date().toISOString()
+                        });
                         saveUserToStorage();
                         showUserHeader();
                         // إخفاء شاشة الترحيب
