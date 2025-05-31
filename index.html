@@ -226,7 +226,6 @@
             border-radius: 8px;
             min-width: 100px;
             justify-content: center;
-            transition: all 0.3s ease;
         }
 
         .stat:hover {
@@ -281,6 +280,61 @@
             font-size: 1.2rem;
         }
 
+        .user-header {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 20px;
+            text-align: right;
+            z-index: 100;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .like-button {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 5px;
+        }
+
+        .like-button.liked {
+            color: #ff4444;
+        }
+
+        .verse-info {
+            margin-top: 15px;
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .verse-author {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .daily-stats {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .daily-likes {
+            color: #ff4444;
+        }
+
+        .daily-views {
+            color: #4CAF50;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -332,8 +386,7 @@
         }
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
     <div class="container">
@@ -357,6 +410,17 @@
         <ul id="leaderboard-list" class="leaderboard-list"></ul>
     </div>
 
+    <div class="user-header">
+        <h3>معلومات المستخدم</h3>
+        <p>الكنيسة: <span id="user-church"></span></p>
+        <div class="user-stats">
+            <div class="stat">
+                <span class="stat-label">النقاط:</span>
+                <span class="stat-value" id="user-points">0</span>
+            </div>
+        </div>
+    </div>
+
     <script>
        const firebaseConfig = {
   apiKey: "AIzaSyC9blkliZTFVMbBlTtpU0mrlMld_R9M1fg",
@@ -369,42 +433,137 @@
 };
 
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const quotesCollection = db.collection('quotes');
-        const usersCollection = db.collection('users');
+        const db = firebase.database();
+        const quotesRef = db.ref('quotes');
+        const usersRef = db.ref('users');
+        const likesRef = db.ref('likes');
+        const dailyVerseRef = db.ref('dailyVerse');
+        
+        let currentUserId = '';
+        let currentUserName = '';
+        let currentUserChurch = '';
+
+        // تحميل آية اليوم
+        async function loadDailyVerse() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const snapshot = await dailyVerseRef.child(today).once('value');
+                const quoteElement = document.getElementById('quote');
+                
+                if (snapshot.exists()) {
+                    const verseData = snapshot.val();
+                    quoteElement.innerHTML = `
+                        <div class="verse-text">${verseData.text}</div>
+                        <div class="verse-info">
+                            <span class="verse-author">${verseData.authorName}</span>
+                            <div class="daily-stats">
+                                <span class="daily-likes">❤️ ${verseData.likes || 0}</span>
+                                <span class="daily-views">👁️ ${verseData.views || 0}</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // إضافة زر الإعجاب
+                    const likeButton = document.createElement('button');
+                    likeButton.className = 'like-button';
+                    likeButton.innerHTML = '🤍';
+                    likeButton.onclick = () => toggleLike(today);
+                    
+                    // التحقق من حالة الإعجاب
+                    const userLike = await likesRef.child(`${today}/${currentUserId}`).once('value');
+                    if (userLike.exists()) {
+                        likeButton.classList.add('liked');
+                        likeButton.innerHTML = '❤️';
+                    }
+                    
+                    quoteElement.appendChild(likeButton);
+                    
+                    // تحديث عدد المشاهدات
+                    await dailyVerseRef.child(today).update({
+                        views: (verseData.views || 0) + 1
+                    });
+                } else {
+                    quoteElement.textContent = "لا توجد آية اليوم بعد";
+                }
+            } catch (error) {
+                console.error("خطأ في تحميل آية اليوم:", error);
+            }
+        }
+
+        // تبديل حالة الإعجاب
+        async function toggleLike(date) {
+            if (!currentUserId) {
+                alert('الرجاء تسجيل الدخول أولاً');
+                return;
+            }
+            
+            try {
+                const likeRef = likesRef.child(`${date}/${currentUserId}`);
+                const snapshot = await likeRef.once('value');
+                
+                if (snapshot.exists()) {
+                    // إلغاء الإعجاب
+                    await likeRef.remove();
+                    await dailyVerseRef.child(date).update({
+                        likes: firebase.database.ServerValue.increment(-1)
+                    });
+                } else {
+                    // إضافة إعجاب
+                    await likeRef.set(true);
+                    await dailyVerseRef.child(date).update({
+                        likes: firebase.database.ServerValue.increment(1)
+                    });
+                }
+                
+                // تحديث واجهة المستخدم
+                loadDailyVerse();
+            } catch (error) {
+                console.error("خطأ في تحديث الإعجاب:", error);
+            }
+        }
 
         // تحميل المتصدرين
         async function loadLeaderboard() {
             try {
-                const snapshot = await usersCollection.orderBy('points', 'desc').get();
+                const snapshot = await usersRef.orderByChild('points').limitToLast(10).once('value');
                 const leaderboardList = document.getElementById('leaderboard-list');
                 leaderboardList.innerHTML = '';
 
-                if (snapshot.empty) {
+                if (!snapshot.exists()) {
                     leaderboardList.innerHTML = '<div class="no-results">لا يوجد متسابقين بعد</div>';
                     return;
                 }
 
-                snapshot.forEach((doc, index) => {
-                    const userData = doc.data();
+                const users = [];
+                snapshot.forEach((childSnapshot) => {
+                    users.push({
+                        id: childSnapshot.key,
+                        ...childSnapshot.val()
+                    });
+                });
+
+                // ترتيب المستخدمين تنازلياً حسب النقاط
+                users.sort((a, b) => (b.points || 0) - (a.points || 0));
+
+                users.forEach((user, index) => {
                     const li = document.createElement('li');
                     li.className = 'leaderboard-item';
                     li.innerHTML = `
                         <div class="user-info">
                             <div style="display: flex; align-items: center;">
                                 <span class="rank-badge">${index + 1}</span>
-                                <span class="user-name">${userData.name}</span>
+                                <span class="user-name">${user.name}</span>
                             </div>
-                            <span class="church-name">${userData.churchName || ''}</span>
+                            <span class="church-name">${user.churchName || ''}</span>
                         </div>
                         <div class="user-stats">
                             <div class="stat">
                                 <span class="stat-label">النقاط:</span>
-                                <span class="stat-value">${userData.points || 0}</span>
+                                <span class="stat-value">${user.points || 0}</span>
                             </div>
                             <div class="stat">
                                 <span class="stat-label">الآيات:</span>
-                                <span class="stat-value">${userData.verses || 0}</span>
+                                <span class="stat-value">${user.verses || 0}</span>
                             </div>
                         </div>
                     `;
@@ -412,8 +571,6 @@
                 });
             } catch (error) {
                 console.error("خطأ في تحميل المتصدرين:", error);
-                const leaderboardList = document.getElementById('leaderboard-list');
-                leaderboardList.innerHTML = '<div class="no-results">حدث خطأ أثناء تحميل المتصدرين</div>';
             }
         }
 
@@ -428,88 +585,97 @@
             }
 
             try {
-                const snapshot = await usersCollection.get();
+                const snapshot = await usersRef.once('value');
                 leaderboardList.innerHTML = '';
                 let found = false;
 
-                snapshot.forEach(doc => {
-                    const userData = doc.data();
-                    if (userData.name.toLowerCase().includes(searchTerm) || 
-                        (userData.churchName && userData.churchName.toLowerCase().includes(searchTerm))) {
-                        found = true;
-                        const li = document.createElement('li');
-                        li.className = 'leaderboard-item';
-                        li.innerHTML = `
-                            <div class="user-info">
-                                <span class="user-name">${userData.name}</span>
-                                <span class="church-name">${userData.churchName || ''}</span>
-                            </div>
-                            <div class="user-stats">
-                                <div class="stat">
-                                    <span class="stat-label">النقاط:</span>
-                                    <span class="stat-value">${userData.points || 0}</span>
-                                </div>
-                                <div class="stat">
-                                    <span class="stat-label">الآيات:</span>
-                                    <span class="stat-value">${userData.verses || 0}</span>
-                                </div>
-                            </div>
-                        `;
-                        leaderboardList.appendChild(li);
-                    }
+                const users = [];
+                snapshot.forEach((childSnapshot) => {
+                    users.push({
+                        id: childSnapshot.key,
+                        ...childSnapshot.val()
+                    });
                 });
 
-                if (!found) {
+                const filteredUsers = users.filter(user => 
+                    user.name.toLowerCase().includes(searchTerm) || 
+                    (user.churchName && user.churchName.toLowerCase().includes(searchTerm))
+                );
+
+                if (filteredUsers.length === 0) {
                     leaderboardList.innerHTML = '<div class="no-results">لا توجد نتائج للبحث</div>';
-                }
-            } catch (error) {
-                console.error("خطأ في البحث:", error);
-                leaderboardList.innerHTML = '<div class="no-results">حدث خطأ أثناء البحث</div>';
-            }
-        });
-
-        // تحميل آية عشوائية
-        async function displayRandomQuote() {
-            const quoteElement = document.getElementById('quote');
-            quoteElement.innerHTML = '<div class="loading"></div>';
-            
-            try {
-                const snapshot = await quotesCollection.get();
-                const quotes = [];
-                snapshot.forEach(doc => {
-                    quotes.push(doc.data().text);
-                });
-                
-                if (quotes.length === 0) {
-                    quoteElement.textContent = "لا توجد آيات محفوظة بعد. يرجى إضافة آيات جديدة من صفحة الإدارة.";
                     return;
                 }
-                
-                const randomIndex = Math.floor(Math.random() * quotes.length);
-                quoteElement.textContent = quotes[randomIndex];
+
+                filteredUsers.forEach((user, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'leaderboard-item';
+                    li.innerHTML = `
+                        <div class="user-info">
+                            <div style="display: flex; align-items: center;">
+                                <span class="rank-badge">${index + 1}</span>
+                                <span class="user-name">${user.name}</span>
+                            </div>
+                            <span class="church-name">${user.churchName || ''}</span>
+                        </div>
+                        <div class="user-stats">
+                            <div class="stat">
+                                <span class="stat-label">النقاط:</span>
+                                <span class="stat-value">${user.points || 0}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">الآيات:</span>
+                                <span class="stat-value">${user.verses || 0}</span>
+                            </div>
+                        </div>
+                    `;
+                    leaderboardList.appendChild(li);
+                });
             } catch (error) {
-                console.error("خطأ في عرض الآية:", error);
-                quoteElement.textContent = "حدث خطأ أثناء تحميل الآية. يرجى المحاولة مرة أخرى.";
+                console.error("خطأ في البحث:", error);
             }
-        }
-
-        // فتح وإغلاق نافذة المتصدرين
-        const leaderboardBtn = document.querySelector('.leaderboard-btn');
-        const leaderboardModal = document.querySelector('.leaderboard-modal');
-        const closeBtn = document.querySelector('.close-btn');
-
-        leaderboardBtn.addEventListener('click', () => {
-            leaderboardModal.style.display = 'flex';
-            loadLeaderboard();
-        });
-
-        closeBtn.addEventListener('click', () => {
-            leaderboardModal.style.display = 'none';
         });
 
         // تحميل البيانات عند تحميل الصفحة
         document.addEventListener('DOMContentLoaded', () => {
-            displayRandomQuote();
+            // تحميل بيانات المستخدم من localStorage
+            const stored = localStorage.getItem('aya-user');
+            if (stored) {
+                try {
+                    const data = JSON.parse(stored);
+                    if (data.userId) {
+                        currentUserId = data.userId;
+                        currentUserName = data.userName;
+                        currentUserChurch = data.churchName;
+                        
+                        // إظهار معلومات المستخدم
+                        const userHeader = document.createElement('div');
+                        userHeader.className = 'user-header';
+                        userHeader.innerHTML = `
+                            <h3>${currentUserName}</h3>
+                            <p>${currentUserChurch}</p>
+                            <div class="user-stats">
+                                <div class="stat">
+                                    <span class="stat-label">النقاط:</span>
+                                    <span class="stat-value" id="user-points">0</span>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(userHeader);
+                        
+                        // تحميل نقاط المستخدم
+                        usersRef.child(currentUserId).on('value', (snapshot) => {
+                            if (snapshot.exists()) {
+                                const userData = snapshot.val();
+                                document.getElementById('user-points').textContent = userData.points || 0;
+                            }
+                        });
+                    }
+                } catch (e) {}
+            }
+
+            loadDailyVerse();
+            loadLeaderboard();
 
             // منع التكبير على الموبايل
             document.addEventListener('touchmove', function(event) {
